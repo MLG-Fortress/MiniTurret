@@ -102,7 +102,7 @@ public class TurretManager implements Listener
                                     cancel();
                                     return;
                                 }
-                                Vector vector = entity.getEyeLocation().toVector().subtract(turret.getEyeLocation().toVector());
+                                Vector vector = entity.getEyeLocation().toVector().subtract(turret.getEyeLocation().add(0, 0.5, 0).toVector());
                                 Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize()), vector, 2, 0);
                                 arrow.setKnockbackStrength(100);
                                 arrow.spigot().setDamage(2D);
@@ -130,6 +130,7 @@ public class TurretManager implements Listener
     {
         if (entity.getType() != EntityType.ARMOR_STAND)
             return;
+        plugin.getLogger().info(entity.getCustomName());
         if (entity.getCustomName() != null)
         {
             UUID uuid;
