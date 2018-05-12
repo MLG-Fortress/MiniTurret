@@ -87,8 +87,6 @@ public class TurretManager implements Listener
 
                         new BukkitRunnable()
                         {
-                            UUID uuid = idleTurrets.get(turret);
-
                             @Override
                             public void run()
                             {
@@ -100,11 +98,12 @@ public class TurretManager implements Listener
                                 }
                                 if (!turret.hasLineOfSight(entity) || turret.getLocation().distanceSquared(entity.getLocation()) > 32 * 32)
                                 {
+                                    turret.removeMetadata("MT_TARGET", plugin);
                                     cancel();
                                     return;
                                 }
                                 Vector vector = entity.getEyeLocation().toVector().subtract(turret.getEyeLocation().toVector());
-                                Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation(), vector, 2, 0);
+                                Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation().add(0, 0.5, 0), vector, 2, 0);
                                 arrow.setKnockbackStrength(100);
                                 arrow.spigot().setDamage(2D);
                                 turret.teleport(turret.getLocation().setDirection(vector));
