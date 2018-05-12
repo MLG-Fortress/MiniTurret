@@ -96,14 +96,14 @@ public class TurretManager implements Listener
                                     cancel();
                                     return;
                                 }
-                                if (!turret.hasLineOfSight(entity) || turret.getLocation().distanceSquared(entity.getLocation()) > 32 * 32)
+                                if (entity.isDead() || !entity.isValid() || !turret.hasLineOfSight(entity) || turret.getLocation().distanceSquared(entity.getLocation()) > 32 * 32)
                                 {
                                     turret.removeMetadata("MT_TARGET", plugin);
                                     cancel();
                                     return;
                                 }
                                 Vector vector = entity.getEyeLocation().toVector().subtract(turret.getEyeLocation().toVector());
-                                Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation().add(vector.clone().normalize()), vector, 2, 0);
+                                Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize()), vector, 2, 0);
                                 arrow.setKnockbackStrength(100);
                                 arrow.spigot().setDamage(2D);
                                 turret.teleport(turret.getLocation().setDirection(vector));
