@@ -106,6 +106,7 @@ public class TurretManager implements Listener
                                 Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize()), vector, 2, 0);
                                 arrow.setKnockbackStrength(100);
                                 arrow.spigot().setDamage(2D);
+                                arrow.setGravity(false);
                                 turret.teleport(turret.getLocation().setDirection(vector));
                             }
                         }.runTaskTimer(plugin, 5L, 5L);
