@@ -78,6 +78,8 @@ public class TurretManager implements Listener
                     //TODO: yea I gotta refactor this if I wanna use different types of turrets
                     for (LivingEntity entity : turret.getWorld().getNearbyLivingEntities(turret.getLocation(), 32))
                     {
+                        if (entity == turret)
+                            continue;
                         if (!turret.hasLineOfSight(entity))
                             continue;
                         if (entity.getUniqueId().equals(idleTurrets.get(turret)))
@@ -130,9 +132,9 @@ public class TurretManager implements Listener
     {
         if (entity.getType() != EntityType.ARMOR_STAND)
             return;
-        plugin.getLogger().info(entity.getCustomName());
         if (entity.getCustomName() != null)
         {
+            plugin.getLogger().info(entity.getCustomName());
             UUID uuid;
             try
             {
@@ -143,6 +145,7 @@ public class TurretManager implements Listener
                 return;
             }
             idleTurrets.put((ArmorStand)entity, uuid);
+            plugin.getLogger().info(entity.getCustomName());
         }
     }
 
