@@ -1,0 +1,7 @@
+name: MiniTurret
+version: ${project.version}
+website: https://robomwm.com
+author: RoboMWM
+main: com.robomwm.miniturret.MiniTurret
+depend:
+- CustomItemRecipes
