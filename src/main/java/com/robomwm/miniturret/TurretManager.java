@@ -78,7 +78,7 @@ public class TurretManager implements Listener
                     //TODO: yea I gotta refactor this if I wanna use different types of turrets
                     for (LivingEntity entity : turret.getWorld().getNearbyLivingEntities(turret.getLocation(), 32))
                     {
-                        if (!turret.hasLineOfSight(turret))
+                        if (!turret.hasLineOfSight(entity))
                             continue;
                         if (entity.getUniqueId().equals(idleTurrets.get(turret)))
                             continue;
@@ -152,7 +152,7 @@ public class TurretManager implements Listener
             return;
         if (!customItemRecipes.isItem("test_turret", event.getItemInHand()))
             return;
-        Location location = event.getBlock().getLocation();
+        Location location = event.getBlock().getLocation().add(0.5, 0, 0.5);
         ArmorStand turret = event.getBlock().getWorld().spawn(location, ArmorStand.class);
         turret.setSmall(true);
         turret.setCustomName(event.getPlayer().getUniqueId().toString());
