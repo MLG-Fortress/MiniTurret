@@ -12,6 +12,7 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -164,5 +165,14 @@ public class TurretManager implements Listener
         event.getItemInHand().setAmount(event.getItemInHand().getAmount() - 1);
         event.setCancelled(true);
         idleTurrets.put(turret, event.getPlayer().getUniqueId());
+    }
+
+    @EventHandler
+    private void onTurretDestroyed(EntityDeathEvent event)
+    {
+        if (event.getEntityType() != EntityType.ARMOR_STAND)
+            return;
+        if (idleTurrets.containsKey(event.getEntity()))
+            event.getDrops().clear();
     }
 }
