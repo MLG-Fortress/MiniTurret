@@ -176,7 +176,7 @@ public class TurretManager implements Listener
             case "carrqt":
                 TippedArrow arrow = world.spawn(spawnLocation, TippedArrow.class);
                 projectile = arrow;
-                arrow.setVelocity(spawnLocation.toVector());
+                arrow.setVelocity(vector.normalize());
                 arrow.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20, 1), false);
                 arrow.spigot().setDamage(0.5D);
                 arrow.setGravity(false);
