@@ -106,7 +106,7 @@ public class TurretManager implements Listener
                                     cancel();
                                     return;
                                 }
-                                if (canTarget(turret, entity, false))
+                                if (!canTarget(turret, entity, false))
                                 {
                                     turret.removeMetadata("MT_TARGET", plugin);
                                     cancel();
@@ -185,7 +185,6 @@ public class TurretManager implements Listener
                 break;
             default:
                 return;
-
         }
 
         Location location = event.getBlock().getLocation().add(0.5, 0, 0.5);
