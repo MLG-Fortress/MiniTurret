@@ -177,7 +177,7 @@ public class TurretManager implements Listener
                 TippedArrow arrow = world.spawn(spawnLocation, TippedArrow.class);
                 projectile = arrow;
                 arrow.setVelocity(vector.normalize());
-                arrow.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20, 1), false);
+                arrow.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1), false);
                 arrow.spigot().setDamage(0.5D);
                 arrow.setGravity(false);
                 break;
