@@ -4,14 +4,16 @@ import com.robomwm.customitemrecipes.CustomItemRecipes;
 import org.bukkit.Chunk;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Projectile;
+import org.bukkit.entity.TippedArrow;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -22,6 +24,7 @@ import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
@@ -115,13 +118,38 @@ public class TurretManager implements Listener
 
                                 fire(turret, entity);
                             }
-                        }.runTaskTimer(plugin, 0, 7L);
+                        }.runTaskTimer(plugin, 0, fireRate(turret));
                         break;
                     }
                 }
             }
         }.runTaskTimer(plugin, 100L, 100L);
     }
+
+    private long fireRate(ArmorStand turret)
+    {
+        String name;
+        try
+        {
+            name = ((SkullMeta)turret.getHelmet().getItemMeta()).getOwningPlayer().getName();
+        }
+        catch (NullPointerException e)
+        {
+            e.printStackTrace();
+            turret.remove();
+            return 1L;
+        }
+
+        switch (name)
+        {
+            case "carrqt":
+                return 10L;
+            case "Wabash_Warrior":
+                return 30L;
+        }
+        return 1L;
+    }
+
 
     private void fire(ArmorStand turret, LivingEntity target)
     {
@@ -140,18 +168,39 @@ public class TurretManager implements Listener
             return;
         }
 
+        Projectile projectile;
+        World world = turret.getWorld();
+
         switch (name)
         {
             case "carrqt":
-                Arrow arrow = turret.getWorld().spawnArrow(spawnLocation, vector, 2, 0);
+                TippedArrow arrow = world.spawn(spawnLocation, TippedArrow.class);
+                projectile = arrow;
+                arrow.setVelocity(spawnLocation.toVector());
+                arrow.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 20, 1), false);
                 arrow.spigot().setDamage(0.5D);
                 arrow.setGravity(false);
                 break;
             case "Wabash_Warrior":
-                Fireball fireball = turret.getWorld().spawn(spawnLocation, Fireball.class);
+                Fireball fireball = world.spawn(spawnLocation, Fireball.class);
+                projectile = fireball;
                 fireball.setDirection(vector);
                 break;
+            default:
+                return;
         }
+
+        final Projectile finalProjectile = projectile;
+
+        new BukkitRunnable()
+        {
+            @Override
+            public void run()
+            {
+                if (finalProjectile.isValid() && !finalProjectile.isDead())
+                    finalProjectile.remove();
+            }
+        }.runTaskLater(plugin, 400L);
     }
 
     @EventHandler
@@ -188,6 +237,9 @@ public class TurretManager implements Listener
     private void onTurretSpawn(BlockPlaceEvent event)
     {
         if (!event.canBuild())
+            return;
+
+        if (event.getItemInHand().getType() != Material.SKULL_ITEM)
             return;
 
         switch (customItemRecipes.extractCustomID(event.getItemInHand().getItemMeta()))
@@ -231,6 +283,10 @@ public class TurretManager implements Listener
     {
         if (target.getType() == EntityType.PLAYER && ((Player)target).getGameMode() != GameMode.SURVIVAL)
             return false;
-        return (includeInvisible || !target.hasPotionEffect(PotionEffectType.INVISIBILITY)) && !target.isDead() && target.isValid() && turret.hasLineOfSight(target) && turret.getLocation().distanceSquared(target.getLocation()) < 36 * 36;
+        return (includeInvisible || !target.hasPotionEffect(PotionEffectType.INVISIBILITY))
+                && !target.isDead()
+                && target.isValid()
+                && turret.hasLineOfSight(target)
+                && turret.getLocation().distanceSquared(target.getLocation()) < 36 * 36;
     }
 }
