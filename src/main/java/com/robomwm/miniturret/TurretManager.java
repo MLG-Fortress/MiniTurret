@@ -118,7 +118,7 @@ public class TurretManager implements Listener
 
                                 fire(turret, entity);
                             }
-                        }.runTaskTimer(plugin, 0, fireRate(turret));
+                        }.runTaskTimer(plugin, 0, rate(turret));
                         break;
                     }
                 }
@@ -126,7 +126,7 @@ public class TurretManager implements Listener
         }.runTaskTimer(plugin, 100L, 100L);
     }
 
-    private long fireRate(ArmorStand turret)
+    private long rate(ArmorStand turret)
     {
         String name;
         try
