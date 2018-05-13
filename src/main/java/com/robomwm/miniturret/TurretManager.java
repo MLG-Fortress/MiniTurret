@@ -128,7 +128,19 @@ public class TurretManager implements Listener
         Vector vector = target.getEyeLocation().toVector().subtract(turret.getEyeLocation().add(0, 0.5, 0).toVector());
         turret.teleport(turret.getLocation().setDirection(vector));
         Location spawnLocation = turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize());
-        switch (((SkullMeta)turret.getHelmet().getItemMeta()).getOwningPlayer().getName())
+        String name;
+        try
+        {
+            name = ((SkullMeta)turret.getHelmet().getItemMeta()).getOwningPlayer().getName();
+        }
+        catch (NullPointerException e)
+        {
+            e.printStackTrace();
+            turret.remove();
+            return;
+        }
+
+        switch (name)
         {
             case "carrqt":
                 Arrow arrow = turret.getWorld().spawnArrow(spawnLocation, vector, 2, 0);
