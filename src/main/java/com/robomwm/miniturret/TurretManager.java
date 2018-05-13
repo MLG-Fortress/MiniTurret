@@ -2,20 +2,27 @@ package com.robomwm.miniturret;
 
 import com.robomwm.customitemrecipes.CustomItemRecipes;
 import org.bukkit.Chunk;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.World;
+import org.bukkit.block.Skull;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
@@ -99,24 +106,39 @@ public class TurretManager implements Listener
                                     cancel();
                                     return;
                                 }
-                                if (entity.isDead() || !entity.isValid() || !turret.hasLineOfSight(entity) || turret.getLocation().distanceSquared(entity.getLocation()) > 36 * 36)
+                                if (canTarget(turret, entity, false))
                                 {
                                     turret.removeMetadata("MT_TARGET", plugin);
                                     cancel();
                                     return;
                                 }
-                                Vector vector = entity.getEyeLocation().toVector().subtract(turret.getEyeLocation().add(0, 0.5, 0).toVector());
-                                Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize()), vector, 2, 0);
-                                arrow.spigot().setDamage(0.5D);
-                                arrow.setGravity(false);
-                                turret.teleport(turret.getLocation().setDirection(vector));
+
+                                fire(turret, entity);
                             }
-                        }.runTaskTimer(plugin, 5L, 5L);
+                        }.runTaskTimer(plugin, 0, 7L);
                         break;
                     }
                 }
             }
         }.runTaskTimer(plugin, 100L, 100L);
+    }
+
+    private void fire(ArmorStand turret, LivingEntity target)
+    {
+        Vector vector = target.getEyeLocation().toVector().subtract(turret.getEyeLocation().add(0, 0.5, 0).toVector());
+        turret.teleport(turret.getLocation().setDirection(vector));
+        switch (((Skull)turret.getHelmet()).getOwningPlayer().getName())
+        {
+            case "carrqt":
+                Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize()), vector, 2, 0);
+                arrow.spigot().setDamage(0.5D);
+                arrow.setGravity(false);
+                break;
+            case "Wabash_Warrior":
+                Fireball fireball = turret.getWorld().spawn(turret.getLocation(), Fireball.class);
+                fireball.setDirection(vector);
+                break;
+        }
     }
 
     @EventHandler
@@ -134,11 +156,11 @@ public class TurretManager implements Listener
             return;
         if (entity.getCustomName() != null)
         {
-            plugin.getLogger().info(entity.getCustomName());
+            String uuidString = entity.getCustomName().split(":")[0];
             UUID uuid;
             try
             {
-                uuid = UUID.fromString(entity.getCustomName());
+                uuid = UUID.fromString(uuidString);
             }
             catch (IllegalArgumentException e)
             {
@@ -149,13 +171,23 @@ public class TurretManager implements Listener
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
     private void onTurretSpawn(BlockPlaceEvent event)
     {
         if (!event.canBuild())
             return;
-        if (!customItemRecipes.isItem("test_turret", event.getItemInHand()))
-            return;
+
+        switch (customItemRecipes.extractCustomID(event.getItemInHand().getItemMeta()))
+        {
+            case "test_turret":
+                break;
+            case "wabash_turret":
+                break;
+            default:
+                return;
+
+        }
+
         Location location = event.getBlock().getLocation().add(0.5, 0, 0.5);
         ArmorStand turret = event.getBlock().getWorld().spawn(location, ArmorStand.class);
         turret.setSmall(true);
@@ -173,5 +205,20 @@ public class TurretManager implements Listener
             return;
         if (idleTurrets.containsKey(event.getEntity()))
             event.getDrops().clear();
+    }
+
+    @EventHandler(ignoreCancelled = true)
+    private void onTurretInteract(PlayerInteractAtEntityEvent event)
+    {
+        if (event.getRightClicked().getType() != EntityType.ARMOR_STAND)
+            return;
+        event.setCancelled(idleTurrets.containsKey(event.getRightClicked()));
+    }
+
+    private boolean canTarget(LivingEntity turret, LivingEntity target, boolean includeInvisible)
+    {
+        if (target.getType() == EntityType.PLAYER && ((Player)target).getGameMode() != GameMode.SURVIVAL)
+            return false;
+        return (includeInvisible && target.hasPotionEffect(PotionEffectType.INVISIBILITY)) || !target.isDead() || target.isValid() || !turret.hasLineOfSight(target) || turret.getLocation().distanceSquared(target.getLocation()) > 36 * 36;
     }
 }
