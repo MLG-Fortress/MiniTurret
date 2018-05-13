@@ -127,15 +127,16 @@ public class TurretManager implements Listener
     {
         Vector vector = target.getEyeLocation().toVector().subtract(turret.getEyeLocation().add(0, 0.5, 0).toVector());
         turret.teleport(turret.getLocation().setDirection(vector));
+        Location spawnLocation = turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize());
         switch (((SkullMeta)turret.getHelmet().getItemMeta()).getOwningPlayer().getName())
         {
             case "carrqt":
-                Arrow arrow = turret.getWorld().spawnArrow(turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize()), vector, 2, 0);
+                Arrow arrow = turret.getWorld().spawnArrow(spawnLocation, vector, 2, 0);
                 arrow.spigot().setDamage(0.5D);
                 arrow.setGravity(false);
                 break;
             case "Wabash_Warrior":
-                Fireball fireball = turret.getWorld().spawn(turret.getLocation(), Fireball.class);
+                Fireball fireball = turret.getWorld().spawn(spawnLocation, Fireball.class);
                 fireball.setDirection(vector);
                 break;
         }
