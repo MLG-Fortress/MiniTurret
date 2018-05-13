@@ -231,6 +231,6 @@ public class TurretManager implements Listener
     {
         if (target.getType() == EntityType.PLAYER && ((Player)target).getGameMode() != GameMode.SURVIVAL)
             return false;
-        return (includeInvisible && target.hasPotionEffect(PotionEffectType.INVISIBILITY)) || !target.isDead() || target.isValid() || !turret.hasLineOfSight(target) || turret.getLocation().distanceSquared(target.getLocation()) > 36 * 36;
+        return (includeInvisible || !target.hasPotionEffect(PotionEffectType.INVISIBILITY)) && !target.isDead() && target.isValid() && turret.hasLineOfSight(target) && turret.getLocation().distanceSquared(target.getLocation()) < 36 * 36;
     }
 }
