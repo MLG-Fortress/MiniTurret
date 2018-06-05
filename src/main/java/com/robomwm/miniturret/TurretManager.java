@@ -242,6 +242,9 @@ public class TurretManager implements Listener
         if (event.getItemInHand().getType() != Material.SKULL_ITEM)
             return;
 
+        if (!customItemRecipes.isCustomItem(event.getItemInHand().getItemMeta()))
+            return;
+
         switch (customItemRecipes.extractCustomID(event.getItemInHand().getItemMeta()))
         {
             case "test_turret":
