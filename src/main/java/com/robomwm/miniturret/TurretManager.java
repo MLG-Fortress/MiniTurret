@@ -1,10 +1,12 @@
 package com.robomwm.miniturret;
 
 import com.robomwm.customitemrecipes.CustomItemRecipes;
-import org.bukkit.Chunk;
+import com.robomwm.miniturret.turret.TargetSystem;
+import com.robomwm.miniturret.turret.Turret;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
@@ -22,15 +24,12 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
 import org.bukkit.inventory.meta.SkullMeta;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 
@@ -47,7 +46,7 @@ public class TurretManager implements Listener
 {
     CustomItemRecipes customItemRecipes;
     private JavaPlugin plugin;
-    private Map<ArmorStand, UUID> idleTurrets = new HashMap<>();
+    private Map<LivingEntity, Turret> turrets = new HashMap<>();
 
     public TurretManager(JavaPlugin plugin)
     {
@@ -55,167 +54,33 @@ public class TurretManager implements Listener
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
         customItemRecipes = (CustomItemRecipes)plugin.getServer().getPluginManager().getPlugin("CustomItemRecipes");
 
-        //wew lad
         for (World world : plugin.getServer().getWorlds())
-            for (Chunk chunk : world.getLoadedChunks())
-                for (Entity entity : chunk.getEntities())
-                    loadTurret(entity);
-
-        //I briefly considered creating a runnable class for this
-        //but then I was like, do I really wanna waste time passing stuff around
-        //then I realized I had to cuz I'm modifying the very list I'm iterating
-        //ugh
-        //So I just use metadata and skip over
-        //If performance is an issue I'll make it better
-        new BukkitRunnable()
-        {
-            @Override
-            public void run()
-            {
-                Iterator<ArmorStand> armorStandIterator = idleTurrets.keySet().iterator();
-                while (armorStandIterator.hasNext())
-                {
-                    ArmorStand turret = armorStandIterator.next();
-
-                    if (turret.isDead() || !turret.isValid())
-                    {
-                        armorStandIterator.remove();
-                        continue;
-                    }
-
-                    if (turret.hasMetadata("MT_TARGET"))
-                        continue;
-
-                    //TODO: yea I gotta refactor this if I wanna use different types of turrets
-                    for (LivingEntity entity : turret.getWorld().getNearbyLivingEntities(turret.getLocation(), 32))
-                    {
-                        if (entity == turret)
-                            continue;
-                        if (!turret.hasLineOfSight(entity))
-                            continue;
-                        if (entity.getUniqueId().equals(idleTurrets.get(turret)))
-                            continue;
-
-                        turret.setMetadata("MT_TARGET", new FixedMetadataValue(plugin, entity));
-
-                        new BukkitRunnable()
-                        {
-                            @Override
-                            public void run()
-                            {
-                                if (turret.isDead() || !turret.isValid())
-                                {
-                                    turret.removeMetadata("MT_TARGET", plugin);
-                                    cancel();
-                                    return;
-                                }
-                                if (!canTarget(turret, entity, false))
-                                {
-                                    turret.removeMetadata("MT_TARGET", plugin);
-                                    cancel();
-                                    return;
-                                }
-
-                                fire(turret, entity);
-                            }
-                        }.runTaskTimer(plugin, 0, rate(turret));
-                        break;
-                    }
-                }
-            }
-        }.runTaskTimer(plugin, 100L, 100L);
+            for (Entity entity : world.getEntities())
+                if (entity instanceof LivingEntity)
+                    loadTurret((LivingEntity)entity);
     }
 
-    private long rate(ArmorStand turret)
-    {
-        String name;
-        try
-        {
-            name = ((SkullMeta)turret.getHelmet().getItemMeta()).getOwningPlayer().getName();
-        }
-        catch (NullPointerException e)
-        {
-            e.printStackTrace();
-            turret.remove();
-            return 1L;
-        }
-
-        switch (name)
-        {
-            case "carrqt":
-                return 10L;
-            case "Wabash_Warrior":
-                return 30L;
-        }
-        return 1L;
-    }
-
-
-    private void fire(ArmorStand turret, LivingEntity target)
-    {
-        Vector vector = target.getEyeLocation().toVector().subtract(turret.getEyeLocation().add(0, 0.5, 0).toVector());
-        turret.teleport(turret.getLocation().setDirection(vector));
-        Location spawnLocation = turret.getEyeLocation().add(0, 0.5, 0).add(vector.clone().normalize());
-        String name;
-        try
-        {
-            name = ((SkullMeta)turret.getHelmet().getItemMeta()).getOwningPlayer().getName();
-        }
-        catch (NullPointerException e)
-        {
-            e.printStackTrace();
-            turret.remove();
-            return;
-        }
-
-        Projectile projectile;
-        World world = turret.getWorld();
-
-        switch (name)
-        {
-            case "carrqt":
-                TippedArrow arrow = world.spawn(spawnLocation, TippedArrow.class);
-                projectile = arrow;
-                arrow.setVelocity(vector.normalize());
-                arrow.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1), false);
-                arrow.spigot().setDamage(0.5D);
-                arrow.setGravity(false);
-                break;
-            case "Wabash_Warrior":
-                Fireball fireball = world.spawn(spawnLocation, Fireball.class);
-                projectile = fireball;
-                fireball.setDirection(vector);
-                break;
-            default:
-                return;
-        }
-
-        final Projectile finalProjectile = projectile;
-
-        new BukkitRunnable()
-        {
-            @Override
-            public void run()
-            {
-                if (finalProjectile.isValid() && !finalProjectile.isDead())
-                    finalProjectile.remove();
-            }
-        }.runTaskLater(plugin, 400L);
-    }
 
     @EventHandler
     private void onChunkLoad(ChunkLoadEvent event)
     {
         for (Entity entity : event.getChunk().getEntities())
         {
-            loadTurret(entity);
+            if (entity instanceof LivingEntity)
+                loadTurret((LivingEntity)entity);
         }
     }
 
-    private void loadTurret(Entity entity)
+    private void loadTurret(LivingEntity entity)
     {
+        if (turrets.containsKey(entity))
+            return;
+
         if (entity.getType() != EntityType.ARMOR_STAND)
             return;
+
+        ArmorStand armorStand = (ArmorStand)entity;
+
         if (entity.getCustomName() != null)
         {
             String uuidString = entity.getCustomName().split(":")[0];
@@ -228,8 +93,6 @@ public class TurretManager implements Listener
             {
                 return;
             }
-            idleTurrets.put((ArmorStand)entity, uuid);
-            plugin.getLogger().info(entity.getCustomName());
         }
     }
 
@@ -239,20 +102,23 @@ public class TurretManager implements Listener
         if (!event.canBuild())
             return;
 
-        if (event.getItemInHand().getType() != Material.SKULL_ITEM)
+        if (event.getItemInHand().getType() != Material.PLAYER_HEAD)
             return;
 
         if (!customItemRecipes.isCustomItem(event.getItemInHand().getItemMeta()))
             return;
 
-        switch (customItemRecipes.extractCustomID(event.getItemInHand().getItemMeta()))
+        String name = customItemRecipes.extractCustomID(event.getItemInHand().getItemMeta());
+
+        switch (name)
         {
             case "test_turret":
                 break;
             case "wabash_turret":
                 break;
             default:
-                return;
+                if (!name.startsWith("TURRET_"))
+                    return;
         }
 
         Location location = event.getBlock().getLocation().add(0.5, 0, 0.5);
@@ -262,7 +128,55 @@ public class TurretManager implements Listener
         turret.setHelmet(event.getItemInHand());
         event.getItemInHand().setAmount(event.getItemInHand().getAmount() - 1);
         event.setCancelled(true);
-        idleTurrets.put(turret, event.getPlayer().getUniqueId());
+        activateTurret(turret, event.getPlayer());
+    }
+
+    private boolean activateTurret(ArmorStand entity, OfflinePlayer owner)
+    {
+
+        if (turrets.containsKey(entity))
+            return false;
+
+        //TODO: use ItemMeta instead of SkullMeta
+        plugin.getLogger().info(entity.getHelmet().getItemMeta().getDisplayName());
+        String name = ((SkullMeta)entity.getHelmet().getItemMeta()).getOwningPlayer().getName();
+        Turret turret = null;
+        switch (name)
+        {
+            case "carrqt":
+                turret = new Turret(plugin, entity, null, owner, null, 32, 100, 10, TargetSystem.FIRST)
+                {
+                    @Override
+                    public Projectile spawnProjectile(Vector vector)
+                    {
+                        TippedArrow arrow = turret.launchProjectile(TippedArrow.class, vector.normalize());
+                        arrow.setGravity(false);
+                        arrow.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1), false);
+                        setProjectileProperty(arrow, "DAMAGE", 0.5D);
+                        return arrow;
+                    }
+                };
+                break;
+
+            case "Wabash_Warrior":
+                turret = new Turret(plugin, entity, null, owner, null, 32, 100, 30, TargetSystem.FIRST)
+                {
+                    @Override
+                    public Projectile spawnProjectile(Vector vector)
+                    {
+                        Fireball fireball = turret.launchProjectile(Fireball.class, vector);
+                        fireball.setDirection(vector);
+                        return fireball;
+                    }
+                };
+                break;
+
+            default:
+                return false;
+        }
+        turrets.put(entity, turret);
+        plugin.getLogger().info(entity.getCustomName());
+        return true;
     }
 
     @EventHandler
@@ -270,7 +184,7 @@ public class TurretManager implements Listener
     {
         if (event.getEntityType() != EntityType.ARMOR_STAND)
             return;
-        if (idleTurrets.containsKey(event.getEntity()))
+        if (turrets.containsKey(event.getEntity()))
             event.getDrops().clear();
     }
 
@@ -279,7 +193,7 @@ public class TurretManager implements Listener
     {
         if (event.getRightClicked().getType() != EntityType.ARMOR_STAND)
             return;
-        event.setCancelled(idleTurrets.containsKey(event.getRightClicked()));
+        event.setCancelled(turrets.containsKey(event.getRightClicked()));
     }
 
     private boolean canTarget(LivingEntity turret, LivingEntity target, boolean includeInvisible)

@@ -9,6 +9,8 @@ import org.bukkit.plugin.java.JavaPlugin;
  */
 public class MiniTurret extends JavaPlugin
 {
+    public static final String TURRET_KEY = "MT_TURRET";
+
     public void onEnable()
     {
         new TurretManager(this);
