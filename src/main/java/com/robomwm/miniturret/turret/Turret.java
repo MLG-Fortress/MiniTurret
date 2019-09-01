@@ -52,7 +52,7 @@ public abstract class Turret
             @Override
             public void run()
             {
-                pickTarget();
+                target = pickTarget();
             }
         }.runTaskTimer(plugin, delay, delay);
 
@@ -109,7 +109,8 @@ public abstract class Turret
             {
                 Player player = (Player)entity;
                 if (player.getGameMode() == GameMode.CREATIVE
-                || player.getGameMode() == GameMode.SPECTATOR)
+                || player.getGameMode() == GameMode.SPECTATOR
+                || player.isInvulnerable())
                 {
                     targetsIterator.remove();
                     continue;
