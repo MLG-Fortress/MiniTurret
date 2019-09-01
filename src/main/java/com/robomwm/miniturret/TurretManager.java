@@ -159,7 +159,7 @@ public class TurretManager implements Listener
                 };
                 break;
 
-            case "Wabash_Warrior":
+            case "Wabash_Rogue":
                 turret = new Turret(plugin, entity, null, owner, null, 32, 100, 30, TargetSystem.FIRST)
                 {
                     @Override

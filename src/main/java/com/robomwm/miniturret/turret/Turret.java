@@ -209,7 +209,7 @@ public abstract class Turret
             target = null;
             return null;
         }
-        Vector vector = target.getEyeLocation().toVector().subtract(turret.getEyeLocation().add(0, 0.5, 0).toVector());
+        Vector vector = target.getEyeLocation().toVector().subtract(turret.getEyeLocation().toVector());
         turret.teleport(turret.getLocation().setDirection(vector));
         return vector;
     }
@@ -220,7 +220,7 @@ public abstract class Turret
         if (vector == null)
             return false;
 
-        spawnProjectile(vector); //TODO: schedule task to cleanup projectile?
+        spawnProjectile(vector).setShooter(turret);
         return true;
     }
 
