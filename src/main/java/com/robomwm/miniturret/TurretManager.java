@@ -16,7 +16,6 @@ import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
-import org.bukkit.entity.TippedArrow;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -159,7 +158,7 @@ public class TurretManager implements Listener
                 };
                 break;
 
-            case "Wabash_Rogue":
+            case "Wabash_Rouge":
                 turret = new Turret(plugin, entity, null, owner, null, 32, 100, 30, TargetSystem.FIRST)
                 {
                     @Override
@@ -168,6 +167,18 @@ public class TurretManager implements Listener
                         Fireball fireball = turret.launchProjectile(Fireball.class, vector);
                         fireball.setDirection(vector);
                         return fireball;
+                    }
+                };
+                break;
+            case "MMM10":
+                turret = new Turret(plugin, entity, null, owner, null, 32, 100, 5, TargetSystem.NEAREST)
+                {
+                    @Override
+                    public Projectile spawnProjectile(Vector vector)
+                    {
+                        Arrow arrow = turret.launchProjectile(Arrow.class, vector.normalize().multiply(3));
+                        arrow.setGravity(false);
+                        return arrow;
                     }
                 };
                 break;
