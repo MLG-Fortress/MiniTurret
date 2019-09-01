@@ -193,6 +193,7 @@ public abstract class Turret
     {
         if (target == null || target.isDead() || target.hasMetadata("DEAD")
                 || target.getWorld() != turret.getWorld()
+                || !turret.hasLineOfSight(target)
                 || target.getLocation().distanceSquared(turret.getLocation()) > range * range)
         {
             target = null;

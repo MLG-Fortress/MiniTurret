@@ -145,7 +145,7 @@ public class TurretManager implements Listener
         switch (name)
         {
             case "carrqt":
-                turret = new Turret(plugin, entity, null, owner, null, 32, 100, 10, TargetSystem.FIRST)
+                turret = new Turret(plugin, entity, null, owner, null, 32, 40, 10, TargetSystem.FIRST)
                 {
                     @Override
                     public Projectile spawnProjectile(Vector vector)
