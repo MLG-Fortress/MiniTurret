@@ -52,6 +52,11 @@ public abstract class Turret
             @Override
             public void run()
             {
+                if (!turret.isValid())
+                {
+                    cancel();
+                    return;
+                }
                 target = pickTarget();
             }
         }.runTaskTimer(plugin, delay, delay);
@@ -61,6 +66,11 @@ public abstract class Turret
             @Override
             public void run()
             {
+                if (!turret.isValid())
+                {
+                    cancel();
+                    return;
+                }
                 fire();
             }
         }.runTaskTimer(plugin, delay, rate);
@@ -135,7 +145,7 @@ public abstract class Turret
             }
 
             //Ignore entities not in line of sight
-            if (entity.isDead() || !turret.hasLineOfSight(entity))
+            if (!entity.isValid() || !turret.hasLineOfSight(entity))
                 targetsIterator.remove();
         }
 
@@ -191,7 +201,7 @@ public abstract class Turret
 
     public Vector aim()
     {
-        if (target == null || target.isDead() || target.hasMetadata("DEAD")
+        if (target == null || !target.isValid() || target.hasMetadata("DEAD")
                 || target.getWorld() != turret.getWorld()
                 || !turret.hasLineOfSight(target)
                 || target.getLocation().distanceSquared(turret.getLocation()) > range * range)
