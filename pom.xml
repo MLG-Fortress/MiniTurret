@@ -18,10 +18,6 @@
             <url>https://repo.destroystokyo.com/repository/maven-public/</url>
         </repository>
         <repository>
-            <id>remote-repos</id>
-            <url>http://104.236.246.108:8081/artifactory/remote-repos</url>
-        </repository>
-        <repository>
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
