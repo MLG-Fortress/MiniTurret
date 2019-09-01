@@ -9,6 +9,7 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Fireball;
@@ -149,7 +150,7 @@ public class TurretManager implements Listener
                     @Override
                     public Projectile spawnProjectile(Vector vector)
                     {
-                        TippedArrow arrow = turret.launchProjectile(TippedArrow.class, vector.normalize());
+                        Arrow arrow = turret.launchProjectile(Arrow.class, vector.normalize());
                         arrow.setGravity(false);
                         arrow.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1), false);
                         setProjectileProperty(arrow, "DAMAGE", 0.5D);
