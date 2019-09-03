@@ -1,21 +1,16 @@
 package com.robomwm.miniturret;
 
 import com.robomwm.customitemrecipes.CustomItemRecipes;
-import com.robomwm.miniturret.turret.TargetSystem;
 import com.robomwm.miniturret.turret.Turret;
-import org.bukkit.GameMode;
+import com.robomwm.miniturret.turret.TurretFactory;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
 import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -23,11 +18,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.util.Vector;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -80,11 +71,11 @@ public class TurretManager implements Listener
             return;
 
         ArmorStand armorStand = (ArmorStand)entity;
+        UUID uuid = null;
 
         if (entity.getCustomName() != null)
         {
             String uuidString = entity.getCustomName().split(":")[0];
-            UUID uuid;
             try
             {
                 uuid = UUID.fromString(uuidString);
@@ -94,6 +85,13 @@ public class TurretManager implements Listener
                 return;
             }
         }
+
+        if (uuid == null)
+            return;
+
+        OfflinePlayer owner = plugin.getServer().getOfflinePlayer(uuid);
+
+        activateTurret(armorStand, owner);
     }
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGH)
@@ -102,8 +100,18 @@ public class TurretManager implements Listener
         if (!event.canBuild())
             return;
 
-        if (event.getItemInHand().getType() != Material.PLAYER_HEAD)
-            return;
+        switch (event.getItemInHand().getType())
+        {
+            case PLAYER_HEAD:
+            case CREEPER_HEAD:
+            case ZOMBIE_HEAD:
+            case SKELETON_SKULL:
+            case WITHER_SKELETON_SKULL:
+            case DRAGON_HEAD:
+                break;
+            default:
+                return;
+        }
 
         if (!customItemRecipes.isCustomItem(event.getItemInHand().getItemMeta()))
             return;
@@ -116,8 +124,10 @@ public class TurretManager implements Listener
                 break;
             case "wabash_turret":
                 break;
+            case "TURRET_MMM10":
+                break;
             default:
-                if (!name.startsWith("TURRET_"))
+                if (!name.endsWith("_TURRET"))
                     return;
         }
 
@@ -133,59 +143,17 @@ public class TurretManager implements Listener
 
     private boolean activateTurret(ArmorStand entity, OfflinePlayer owner)
     {
-
+        //ignore if already activated
         if (turrets.containsKey(entity))
             return false;
 
-        //TODO: use ItemMeta instead of SkullMeta
         plugin.getLogger().info(entity.getHelmet().getItemMeta().getDisplayName());
-        String name = ((SkullMeta)entity.getHelmet().getItemMeta()).getOwningPlayer().getName();
-        Turret turret = null;
-        switch (name)
-        {
-            case "carrqt":
-                turret = new Turret(plugin, entity, null, owner, null, 32, 40, 10, TargetSystem.FIRST)
-                {
-                    @Override
-                    public Projectile spawnProjectile(Vector vector)
-                    {
-                        Arrow arrow = turret.launchProjectile(Arrow.class, vector.normalize());
-                        arrow.setGravity(false);
-                        arrow.addCustomEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 1), false);
-                        setProjectileProperty(arrow, "DAMAGE", 0.5D);
-                        return arrow;
-                    }
-                };
-                break;
-
-            case "Wabash_Rouge":
-                turret = new Turret(plugin, entity, null, owner, null, 32, 100, 30, TargetSystem.FIRST)
-                {
-                    @Override
-                    public Projectile spawnProjectile(Vector vector)
-                    {
-                        Fireball fireball = turret.launchProjectile(Fireball.class, vector);
-                        fireball.setDirection(vector);
-                        return fireball;
-                    }
-                };
-                break;
-            case "MMM10":
-                turret = new Turret(plugin, entity, null, owner, null, 32, 100, 5, TargetSystem.NEAREST)
-                {
-                    @Override
-                    public Projectile spawnProjectile(Vector vector)
-                    {
-                        Arrow arrow = turret.launchProjectile(Arrow.class, vector.normalize().multiply(3));
-                        arrow.setGravity(false);
-                        return arrow;
-                    }
-                };
-                break;
-
-            default:
-                return false;
-        }
+        if (entity.getHelmet().getType() == Material.AIR)
+            return false;
+        String name = customItemRecipes.extractCustomID(entity.getHelmet().getItemMeta());
+        if (name == null)
+            return false;
+        Turret turret = TurretFactory.createTurret(name, plugin, entity, owner);
         turrets.put(entity, turret);
         plugin.getLogger().info(entity.getCustomName());
         return true;
@@ -194,8 +162,6 @@ public class TurretManager implements Listener
     @EventHandler
     private void onTurretDestroyed(EntityDeathEvent event)
     {
-        if (event.getEntityType() != EntityType.ARMOR_STAND)
-            return;
         if (turrets.containsKey(event.getEntity()))
             event.getDrops().clear();
     }
@@ -203,19 +169,6 @@ public class TurretManager implements Listener
     @EventHandler(ignoreCancelled = true)
     private void onTurretInteract(PlayerInteractAtEntityEvent event)
     {
-        if (event.getRightClicked().getType() != EntityType.ARMOR_STAND)
-            return;
         event.setCancelled(turrets.containsKey(event.getRightClicked()));
-    }
-
-    private boolean canTarget(LivingEntity turret, LivingEntity target, boolean includeInvisible)
-    {
-        if (target.getType() == EntityType.PLAYER && ((Player)target).getGameMode() != GameMode.SURVIVAL)
-            return false;
-        return (includeInvisible || !target.hasPotionEffect(PotionEffectType.INVISIBILITY))
-                && !target.isDead()
-                && target.isValid()
-                && turret.hasLineOfSight(target)
-                && turret.getLocation().distanceSquared(target.getLocation()) < 36 * 36;
     }
 }

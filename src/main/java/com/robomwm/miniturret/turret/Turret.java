@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
+import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.util.Vector;
@@ -54,7 +55,7 @@ public abstract class Turret
             {
                 if (!turret.isValid())
                 {
-                    cancel();
+                    close();
                     return;
                 }
                 target = pickTarget();
@@ -68,7 +69,7 @@ public abstract class Turret
             {
                 if (!turret.isValid())
                 {
-                    cancel();
+                    close();
                     return;
                 }
                 fire();
@@ -201,10 +202,7 @@ public abstract class Turret
 
     public Vector aim()
     {
-        if (target == null || !target.isValid() || target.hasMetadata("DEAD")
-                || target.getWorld() != turret.getWorld()
-                || !turret.hasLineOfSight(target)
-                || target.getLocation().distanceSquared(turret.getLocation()) > range * range)
+        if (!canTarget(target))
         {
             target = null;
             return null;
@@ -236,5 +234,21 @@ public abstract class Turret
     public void setProjectileProperty(Projectile projectile, String property, Object value)
     {
         projectile.setMetadata("PROJECTILE_" + property, new FixedMetadataValue(plugin, value));
+    }
+
+    public boolean canTarget(LivingEntity target)
+    {
+        if (target == null)
+            return false;
+        if (target.getType() == EntityType.PLAYER
+                && (((Player)target).getGameMode() == GameMode.CREATIVE
+                || ((Player)target).getGameMode() == GameMode.SPECTATOR))
+            return false;
+        return !target.hasPotionEffect(PotionEffectType.INVISIBILITY)
+                && !target.isInvulnerable()
+                && !target.hasMetadata("DEAD")
+                && target.isValid()
+                && turret.hasLineOfSight(target)
+                && turret.getLocation().distanceSquared(target.getLocation()) < range * range;
     }
 }
