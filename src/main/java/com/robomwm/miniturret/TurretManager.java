@@ -35,7 +35,7 @@ import java.util.UUID;
  */
 public class TurretManager implements Listener
 {
-    CustomItemRecipes customItemRecipes;
+    private CustomItemRecipes customItemRecipes;
     private JavaPlugin plugin;
     private Map<LivingEntity, Turret> turrets = new HashMap<>();
 
@@ -154,6 +154,8 @@ public class TurretManager implements Listener
         if (name == null)
             return false;
         Turret turret = TurretFactory.createTurret(name, plugin, entity, owner);
+        if (turret == null)
+            return false;
         turrets.put(entity, turret);
         plugin.getLogger().info(entity.getCustomName());
         return true;

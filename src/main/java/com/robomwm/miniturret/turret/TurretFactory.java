@@ -49,6 +49,7 @@ public class TurretFactory
                     }
                 };
             case "TURRET_MMM10":
+            case "MMM10_TURRET":
                 return new Turret(plugin, entity, null, owner, null, 32, 100, 5, TargetSystem.NEAREST)
                 {
                     @Override
