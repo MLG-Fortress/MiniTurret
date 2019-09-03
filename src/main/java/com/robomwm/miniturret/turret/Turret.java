@@ -36,10 +36,10 @@ public abstract class Turret
     private final BukkitTask checkTask;
     private final BukkitTask fireTask;
 
-    public Turret(Plugin plugin, LivingEntity turret, ClanManager clanManager, OfflinePlayer owner, Clan clan, int range, int delay, int rate, TargetSystem system)
+    public Turret(Plugin plugin, LivingEntity turretEntity, ClanManager clanManager, OfflinePlayer owner, Clan clan, int range, int delay, int rate, TargetSystem system)
     {
         this.plugin = plugin;
-        this.turret = turret;
+        this.turret = turretEntity;
         this.clanManager = clanManager;
         this.owner = owner;
         this.clan = clan;
@@ -53,7 +53,7 @@ public abstract class Turret
             @Override
             public void run()
             {
-                if (!turret.isValid())
+                if (!turretEntity.isValid())
                 {
                     close();
                     return;
@@ -67,7 +67,7 @@ public abstract class Turret
             @Override
             public void run()
             {
-                if (!turret.isValid())
+                if (!turretEntity.isValid())
                 {
                     close();
                     return;
@@ -76,7 +76,7 @@ public abstract class Turret
             }
         }.runTaskTimer(plugin, delay, rate);
 
-        turret.setMetadata(MiniTurret.TURRET_KEY, new FixedMetadataValue(plugin, this));
+        turretEntity.setMetadata(MiniTurret.TURRET_KEY, new FixedMetadataValue(plugin, this));
     }
 
     public OfflinePlayer getOwner()
@@ -108,46 +108,39 @@ public abstract class Turret
         while (targetsIterator.hasNext())
         {
             LivingEntity entity = targetsIterator.next();
-            //Ignore owner and friendly players
-            if (isFriendly(entity.getUniqueId()))
+
+            //Ignore anything that can't be targeted
+            if (!canTarget(entity))
             {
                 targetsIterator.remove();
                 continue;
             }
 
-            //Ignore invulnerable gamemodes
-            else if (entity.getType() == EntityType.PLAYER)
+            //Ignore owner and friendly players
+            else if (isFriendly(entity.getUniqueId()))
             {
-                Player player = (Player)entity;
-                if (player.getGameMode() == GameMode.CREATIVE
-                || player.getGameMode() == GameMode.SPECTATOR
-                || player.isInvulnerable())
-                {
-                    targetsIterator.remove();
-                    continue;
-                }
+                targetsIterator.remove();
+                continue;
             }
 
-            //Ignore friendly turrets
+            //Ignore armor stands
             else if (entity.getType() == EntityType.ARMOR_STAND)
             {
+                //except for other turrets
                 if (!entity.hasMetadata(MiniTurret.TURRET_KEY))
                 {
                     targetsIterator.remove();
                     continue;
                 }
 
-                Turret turret = (Turret)entity.getMetadata("MT_TURRET").get(0).value();
+                //but if it's a friendly turret, ignore it
+                Turret turret = (Turret)entity.getMetadata(MiniTurret.TURRET_KEY).get(0).value();
                 if (isFriendly(turret.getOwner().getUniqueId()))
                 {
                     targetsIterator.remove();
                     continue;
                 }
             }
-
-            //Ignore entities not in line of sight
-            if (!entity.isValid() || !turret.hasLineOfSight(entity))
-                targetsIterator.remove();
         }
 
         return targets;
