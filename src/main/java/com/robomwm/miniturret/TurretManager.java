@@ -1,6 +1,6 @@
 package com.robomwm.miniturret;
 
-import com.robomwm.customitemrecipes.CustomItemRecipes;
+import com.robomwm.customitemregistry.CustomItemRegistry;
 import com.robomwm.miniturret.turret.Turret;
 import com.robomwm.miniturret.turret.TurretFactory;
 import org.bukkit.Location;
@@ -35,7 +35,7 @@ import java.util.UUID;
  */
 public class TurretManager implements Listener
 {
-    private CustomItemRecipes customItemRecipes;
+    private CustomItemRegistry customItemRegistry;
     private JavaPlugin plugin;
     private Map<LivingEntity, Turret> turrets = new HashMap<>();
 
@@ -43,7 +43,7 @@ public class TurretManager implements Listener
     {
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        customItemRecipes = (CustomItemRecipes)plugin.getServer().getPluginManager().getPlugin("CustomItemRecipes");
+        customItemRegistry = (CustomItemRegistry) plugin.getServer().getPluginManager().getPlugin("CustomItemRecipes");
 
         for (World world : plugin.getServer().getWorlds())
             for (Entity entity : world.getEntities())
@@ -113,10 +113,10 @@ public class TurretManager implements Listener
                 return;
         }
 
-        if (!customItemRecipes.isCustomItem(event.getItemInHand().getItemMeta()))
+        if (!customItemRegistry.isCustomItem(event.getItemInHand().getItemMeta()))
             return;
 
-        String name = customItemRecipes.extractCustomID(event.getItemInHand().getItemMeta());
+        String name = customItemRegistry.extractCustomID(event.getItemInHand().getItemMeta());
 
         switch (name)
         {
@@ -135,7 +135,7 @@ public class TurretManager implements Listener
         ArmorStand turret = event.getBlock().getWorld().spawn(location, ArmorStand.class);
         turret.setSmall(true);
         turret.setCustomName(event.getPlayer().getUniqueId().toString());
-        turret.setHelmet(event.getItemInHand());
+        turret.getEquipment().setHelmet(event.getItemInHand());
         event.getItemInHand().setAmount(event.getItemInHand().getAmount() - 1);
         event.setCancelled(true);
         activateTurret(turret, event.getPlayer());
@@ -147,10 +147,10 @@ public class TurretManager implements Listener
         if (turrets.containsKey(entity))
             return false;
 
-        plugin.getLogger().info(entity.getHelmet().getItemMeta().getDisplayName());
-        if (entity.getHelmet().getType() == Material.AIR)
+        plugin.getLogger().info(entity.getEquipment().getHelmet().getItemMeta().getDisplayName());
+        if (entity.getEquipment().getHelmet().getType() == Material.AIR)
             return false;
-        String name = customItemRecipes.extractCustomID(entity.getHelmet().getItemMeta());
+        String name = customItemRegistry.extractCustomID(entity.getHelmet().getItemMeta());
         if (name == null)
             return false;
         Turret turret = TurretFactory.createTurret(name, plugin, entity, owner);

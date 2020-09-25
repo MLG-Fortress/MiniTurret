@@ -15,6 +15,6 @@ public class MiniTurret extends JavaPlugin
     public void onEnable()
     {
         new TurretManager(this);
-        new Metrics(this);
+        new Metrics(this, 5523);
     }
 }
