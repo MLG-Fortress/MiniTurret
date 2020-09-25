@@ -43,7 +43,12 @@ public class TurretManager implements Listener
     {
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        customItemRegistry = (CustomItemRegistry) plugin.getServer().getPluginManager().getPlugin("CustomItemRecipes");
+        customItemRegistry = (CustomItemRegistry)plugin.getServer().getPluginManager().getPlugin("CustomItemRegistry");
+        if (customItemRegistry == null)
+        {
+            plugin.getLogger().severe("Something's messed up with CustomItemRegistry");
+            plugin.getPluginLoader().disablePlugin(plugin);
+        }
 
         for (World world : plugin.getServer().getWorlds())
             for (Entity entity : world.getEntities())
