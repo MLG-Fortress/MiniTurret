@@ -11,10 +11,12 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockPlaceEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.world.ChunkLoadEvent;
@@ -164,6 +166,14 @@ public class TurretManager implements Listener
         turrets.put(entity, turret);
         plugin.getLogger().info(entity.getCustomName());
         return true;
+    }
+
+    //For now, turrets are invulnerable to projectiles (as they are already fragile enough + their own projectiles reflect and hit them so ya)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
+    private void onTurretHitByProjectile(EntityDamageByEntityEvent event)
+    {
+        if (event.getDamager() instanceof Projectile)
+            event.setCancelled(true);
     }
 
     @EventHandler
