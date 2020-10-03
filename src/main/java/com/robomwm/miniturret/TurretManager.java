@@ -172,6 +172,8 @@ public class TurretManager implements Listener
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOWEST)
     private void onTurretHitByProjectile(EntityDamageByEntityEvent event)
     {
+        if (!turrets.containsKey(event.getEntity()))
+            return;
         if (event.getDamager() instanceof Projectile)
             event.setCancelled(true);
     }
