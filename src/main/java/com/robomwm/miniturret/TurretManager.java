@@ -1,6 +1,5 @@
 package com.robomwm.miniturret;
 
-import com.robomwm.customitemregistry.CustomItemRegistry;
 import com.robomwm.miniturret.turret.Turret;
 import com.robomwm.miniturret.turret.TurretFactory;
 import org.bukkit.Location;
@@ -37,7 +36,6 @@ import java.util.UUID;
  */
 public class TurretManager implements Listener
 {
-    private CustomItemRegistry customItemRegistry;
     private JavaPlugin plugin;
     private Map<LivingEntity, Turret> turrets = new HashMap<>();
 
@@ -45,12 +43,6 @@ public class TurretManager implements Listener
     {
         this.plugin = plugin;
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
-        customItemRegistry = (CustomItemRegistry)plugin.getServer().getPluginManager().getPlugin("CustomItemRegistry");
-        if (customItemRegistry == null)
-        {
-            plugin.getLogger().severe("Something's messed up with CustomItemRegistry");
-            plugin.getPluginLoader().disablePlugin(plugin);
-        }
 
         for (World world : plugin.getServer().getWorlds())
             for (Entity entity : world.getEntities())
@@ -110,33 +102,30 @@ public class TurretManager implements Listener
         switch (event.getItemInHand().getType())
         {
             case PLAYER_HEAD:
-            case CREEPER_HEAD:
-            case ZOMBIE_HEAD:
-            case SKELETON_SKULL:
-            case WITHER_SKELETON_SKULL:
-            case DRAGON_HEAD:
+//            case CREEPER_HEAD:
+//            case ZOMBIE_HEAD:
+//            case SKELETON_SKULL:
+//            case WITHER_SKELETON_SKULL:
+//            case DRAGON_HEAD:
                 break;
             default:
                 return;
         }
 
-        if (!customItemRegistry.isCustomItem(event.getItemInHand().getItemMeta()))
-            return;
+        String name = "CODEC_TURRET"; //TODO this is test only
 
-        String name = customItemRegistry.extractCustomID(event.getItemInHand().getItemMeta());
-
-        switch (name)
-        {
-            case "test_turret":
-                break;
-            case "wabash_turret":
-                break;
-            case "TURRET_MMM10":
-                break;
-            default:
-                if (!name.endsWith("_TURRET"))
-                    return;
-        }
+//        switch (name)
+//        {
+//            case "test_turret":
+//                break;
+//            case "wabash_turret":
+//                break;
+//            case "TURRET_MMM10":
+//                break;
+//            default:
+//                if (!name.endsWith("_TURRET"))
+//                    return;
+//        }
 
         Location location = event.getBlock().getLocation().add(0.5, 0, 0.5);
         ArmorStand turret = event.getBlock().getWorld().spawn(location, ArmorStand.class);
@@ -157,14 +146,16 @@ public class TurretManager implements Listener
         plugin.getLogger().info(entity.getEquipment().getHelmet().getItemMeta().getDisplayName());
         if (entity.getEquipment().getHelmet().getType() == Material.AIR)
             return false;
-        String name = customItemRegistry.extractCustomID(entity.getHelmet().getItemMeta());
+        if (entity.getEquipment().getHelmet().getType() != Material.PLAYER_HEAD) //TODO test
+            return false;
+        String name = "CODEC_TURRET"; //TODO test
         if (name == null)
             return false;
         Turret turret = TurretFactory.createTurret(name, plugin, entity, owner);
         if (turret == null)
             return false;
         turrets.put(entity, turret);
-        plugin.getLogger().info(entity.getCustomName());
+        plugin.getLogger().info("loaded turret at " + entity.getLocation());
         return true;
     }
 

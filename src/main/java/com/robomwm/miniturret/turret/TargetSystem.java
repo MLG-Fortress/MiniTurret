@@ -6,5 +6,6 @@ public enum TargetSystem
     NEAREST,
     LOWEST_HEALTH,
     HIGHEST_HEALTH,
+    PHANTOM,
     ALL
 }

@@ -23,7 +23,7 @@ public class TurretFactory
         switch (name)
         {
             case "test_turret":
-                return new Turret(plugin, entity, null, owner, null, 32, 40, 10, TargetSystem.FIRST)
+                return new Turret(plugin, entity, owner, 32, 40, 10, TargetSystem.FIRST)
                 {
                     @Override
                     public Projectile spawnProjectile(Vector vector)
@@ -38,7 +38,7 @@ public class TurretFactory
                     }
                 };
             case "Wabash_Turret":
-                return new Turret(plugin, entity, null, owner, null, 32, 100, 30, TargetSystem.FIRST)
+                return new Turret(plugin, entity, owner, 32, 100, 30, TargetSystem.FIRST)
                 {
                     @Override
                     public Projectile spawnProjectile(Vector vector)
@@ -50,7 +50,7 @@ public class TurretFactory
                 };
             case "TURRET_MMM10":
             case "MMM10_TURRET":
-                return new Turret(plugin, entity, null, owner, null, 32, 100, 5, TargetSystem.NEAREST)
+                return new Turret(plugin, entity, owner, 32, 100, 5, TargetSystem.NEAREST)
                 {
                     @Override
                     public Projectile spawnProjectile(Vector vector)
@@ -59,6 +59,19 @@ public class TurretFactory
                         arrow.setGravity(false);
                         arrow.setCritical(true);
                         arrow.setColor(Color.YELLOW);
+                        return arrow;
+                    }
+                };
+            case "CODEC_TURRET":
+                return new Turret(plugin, entity, owner, 32, 100, 5, TargetSystem.NEAREST)
+                {
+                    @Override
+                    public Projectile spawnProjectile(Vector vector)
+                    {
+                        Arrow arrow = turret.launchProjectile(Arrow.class, vector.normalize());
+                        arrow.setGravity(false);
+                        arrow.setCritical(true);
+                        arrow.setColor(Color.BLUE);
                         return arrow;
                     }
                 };

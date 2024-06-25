@@ -1,15 +1,9 @@
 package com.robomwm.miniturret.turret;
 
 import com.robomwm.miniturret.MiniTurret;
-import net.sacredlabyrinth.phaed.simpleclans.Clan;
-import net.sacredlabyrinth.phaed.simpleclans.managers.ClanManager;
 import org.bukkit.GameMode;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Arrow;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
-import org.bukkit.entity.Projectile;
+import org.bukkit.entity.*;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.potion.PotionEffectType;
@@ -25,8 +19,6 @@ public abstract class Turret
 {
     private final Plugin plugin;
     protected final LivingEntity turret;
-    private final Clan clan;
-    private final ClanManager clanManager;
     private final OfflinePlayer owner;
     private final int range;
     private final int delay;
@@ -36,13 +28,11 @@ public abstract class Turret
     private final BukkitTask checkTask;
     private final BukkitTask fireTask;
 
-    public Turret(Plugin plugin, LivingEntity turretEntity, ClanManager clanManager, OfflinePlayer owner, Clan clan, int range, int delay, int rate, TargetSystem system)
+    public Turret(Plugin plugin, LivingEntity turretEntity, OfflinePlayer owner, int range, int delay, int rate, TargetSystem system)
     {
         this.plugin = plugin;
         this.turret = turretEntity;
-        this.clanManager = clanManager;
         this.owner = owner;
-        this.clan = clan;
         this.range = range;
         this.delay = delay;
         this.rate = rate;
@@ -92,59 +82,47 @@ public abstract class Turret
 
     public boolean isFriendly(UUID uuid)
     {
-        if (uuid.equals(owner.getUniqueId()))
-            return true;
-        if (clan == null)
-            return false;
-        return clan.getAllAllyMembers().contains(clanManager.getClanPlayer(uuid));
+        return true;
     }
+
+    //TODO: optimize or something
+//    private Collection<LivingEntity> getTargetsInSight(int range)
+//    {
+//        Collection<LivingEntity> targets = turret.getLocation().getNearbyLivingEntities(range);
+//        turret.getLocation().getNearbyEntitiesByType(Phantom.class, range);
+//        targets.remove(turret);
+//        Iterator<LivingEntity> targetsIterator = targets.iterator();
+//
+//        while (targetsIterator.hasNext())
+//        {
+//            LivingEntity entity = targetsIterator.next();
+//
+//            //Ignore anything that can't be targeted
+//            if (!canTarget(entity))
+//            {
+//                targetsIterator.remove();
+//                continue;
+//            }
+//
+//            //Ignore players and armor stands
+//            switch (entity.getType())
+//            {
+//                case PLAYER:
+//                case ARMOR_STAND:
+//                    targetsIterator.remove();
+//                    continue;
+//            }
+//        }
+//
+//        return targets;
+//    }
 
     private Collection<LivingEntity> getTargetsInSight(int range)
     {
         Collection<LivingEntity> targets = turret.getLocation().getNearbyLivingEntities(range);
-        targets.remove(turret);
-        Iterator<LivingEntity> targetsIterator = targets.iterator();
-
-        while (targetsIterator.hasNext())
-        {
-            LivingEntity entity = targetsIterator.next();
-
-            //Ignore anything that can't be targeted
-            if (!canTarget(entity))
-            {
-                targetsIterator.remove();
-                continue;
-            }
-
-            //Ignore owner and friendly players
-            else if (isFriendly(entity.getUniqueId()))
-            {
-                targetsIterator.remove();
-                continue;
-            }
-
-            //Ignore armor stands
-            else if (entity.getType() == EntityType.ARMOR_STAND)
-            {
-                //except for other turrets
-                if (!entity.hasMetadata(MiniTurret.TURRET_KEY))
-                {
-                    targetsIterator.remove();
-                    continue;
-                }
-
-                //but if it's a friendly turret, ignore it
-                Turret turret = (Turret)entity.getMetadata(MiniTurret.TURRET_KEY).get(0).value();
-                if (isFriendly(turret.getOwner().getUniqueId()))
-                {
-                    targetsIterator.remove();
-                    continue;
-                }
-            }
-        }
-
-        return targets;
+        return turret.getLocation().getNearbyEntitiesByType(Phantom.class, range);
     }
+
 
     //choose a target based on the assigned Target system
     public LivingEntity pickTarget()
@@ -152,6 +130,10 @@ public abstract class Turret
         LivingEntity target = null;
         switch (system)
         {
+            case PHANTOM:
+                for (LivingEntity entity : getTargetsInSight(range))
+                    return entity;
+                return target;
             case NEAREST:
                 int distance = range + 1;
                 //TODO: check if getEntitiesInRange returns in sorted order (I'd presume it does?)

@@ -3,6 +3,4 @@ version: '${project.version}-${git.commit.id.abbrev}'
 website: https://robomwm.com
 author: RoboMWM
 main: com.robomwm.miniturret.MiniTurret
-depend:
-- CustomItemRegistry
 api-version: '1.13'
