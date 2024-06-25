@@ -1,6 +1,5 @@
 package com.robomwm.miniturret;
 
-import org.bstats.bukkit.Metrics;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /**
@@ -15,6 +14,5 @@ public class MiniTurret extends JavaPlugin
     public void onEnable()
     {
         new TurretManager(this);
-        new Metrics(this, 5523);
     }
 }
