@@ -57,6 +57,10 @@
                             <pattern>com.robomwm.usefulutils</pattern>
                             <shadedPattern>com.robomwm.miniturret.shaded.usefulutils</shadedPattern>
                         </relocation>
+                        <relocation>
+                            <pattern>org.bstats</pattern>
+                            <shadedPattern>com.robomwm.miniturret.shaded.bstats</shadedPattern>
+                        </relocation>
                     </relocations>
                 </configuration>
                 <executions>
